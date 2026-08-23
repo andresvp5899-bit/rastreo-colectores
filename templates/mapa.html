@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Rastreo de Colectores</title>
+
+    <!-- Leaflet -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    >
+
+    <!-- Nuestro CSS -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='estilo.css') }}"
+    >
+</head>
+
+<body>
+
+    <div id="titulo">
+        📍 Rastreo de Colectores
+    </div>
+
+    <div id="map"></div>
+
+
+    <!-- Leaflet -->
+    <script
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+    </script>
+
+    <!-- Nuestro JavaScript -->
+    <script
+        src="{{ url_for('static', filename='mapa.js') }}">
+    </script>
+
+</body>
+
+</html>
