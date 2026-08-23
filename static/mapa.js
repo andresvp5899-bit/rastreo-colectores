@@ -26,42 +26,76 @@ L.tileLayer(
 // ==========================================
 
 const marcadores = {};
+
 let datosColectores = [];
+
+
+// ==========================================
+// ESCAPAR TEXTO
+// ==========================================
+
+function escapar(texto) {
+
+    const div =
+        document.createElement("div");
+
+    div.textContent =
+        texto ?? "";
+
+    return div.innerHTML;
+}
 
 
 // ==========================================
 // ESTADO DEL COLECTOR
 // ==========================================
 
-function obtenerEstado(ultimaConexion) {
+function obtenerEstado(
+    ultimaConexion
+) {
 
     if (!ultimaConexion) {
+
         return {
             texto: "🔴 DESCONECTADO",
             online: false
         };
     }
 
-    let fechaTexto = ultimaConexion;
+
+    let fechaTexto =
+        ultimaConexion;
+
 
     if (
         !fechaTexto.endsWith("Z") &&
         !fechaTexto.includes("+")
     ) {
+
         fechaTexto += "Z";
     }
+
 
     const fechaUltimaConexion =
         new Date(fechaTexto);
 
-    if (isNaN(fechaUltimaConexion.getTime())) {
+
+    if (
+        isNaN(
+            fechaUltimaConexion.getTime()
+        )
+    ) {
+
         return {
             texto: "🔴 DESCONECTADO",
             online: false
         };
     }
 
-    const ahora = new Date();
+
+    const ahora =
+        new Date();
+
 
     const diferenciaSegundos =
         Math.floor(
@@ -71,15 +105,18 @@ function obtenerEstado(ultimaConexion) {
             ) / 1000
         );
 
+
     if (
         diferenciaSegundos >= 0 &&
         diferenciaSegundos <= 60
     ) {
+
         return {
             texto: "🟢 EN LÍNEA",
             online: true
         };
     }
+
 
     return {
         texto: "🔴 DESCONECTADO",
@@ -89,7 +126,7 @@ function obtenerEstado(ultimaConexion) {
 
 
 // ==========================================
-// FORMATEAR FECHA
+// FORMATEAR ÚLTIMA CONEXIÓN
 // ==========================================
 
 function formatearUltimaConexion(
@@ -100,21 +137,33 @@ function formatearUltimaConexion(
         return "Sin datos";
     }
 
-    let fechaTexto = ultimaConexion;
+
+    let fechaTexto =
+        ultimaConexion;
+
 
     if (
         !fechaTexto.endsWith("Z") &&
         !fechaTexto.includes("+")
     ) {
+
         fechaTexto += "Z";
     }
+
 
     const fecha =
         new Date(fechaTexto);
 
-    if (isNaN(fecha.getTime())) {
+
+    if (
+        isNaN(
+            fecha.getTime()
+        )
+    ) {
+
         return ultimaConexion;
     }
+
 
     return fecha.toLocaleString(
         "es-PY",
@@ -141,6 +190,7 @@ function actualizarEstadisticas(
     let online = 0;
     let offline = 0;
 
+
     colectores.forEach(
         colector => {
 
@@ -149,28 +199,284 @@ function actualizarEstadisticas(
                     colector.ultima_conexion
                 );
 
+
             if (estado.online) {
+
                 online++;
+
             } else {
+
                 offline++;
             }
+
         }
     );
+
 
     document.getElementById(
         "totalColectores"
     ).textContent =
         colectores.length;
 
+
     document.getElementById(
         "totalOnline"
     ).textContent =
         online;
 
+
     document.getElementById(
         "totalOffline"
     ).textContent =
         offline;
+}
+
+
+// ==========================================
+// CENTRAR COLECTOR
+// ==========================================
+
+function centrarColector(
+    deviceId
+) {
+
+    const marcador =
+        marcadores[
+            deviceId
+        ];
+
+
+    if (!marcador) {
+        return;
+    }
+
+
+    const posicion =
+        marcador.getLatLng();
+
+
+    mapa.flyTo(
+        posicion,
+        19,
+        {
+            animate: true,
+            duration: 1.2
+        }
+    );
+
+
+    marcador.openPopup();
+}
+
+
+// ==========================================
+// EDITAR SERIE
+// ==========================================
+
+async function editarSerie(
+    deviceId,
+    serieActual
+) {
+
+    const nuevaSerie =
+        prompt(
+            "Ingrese la nueva serie del colector:",
+            serieActual
+        );
+
+
+    if (
+        nuevaSerie === null
+    ) {
+        return;
+    }
+
+
+    const serieLimpia =
+        nuevaSerie.trim();
+
+
+    if (!serieLimpia) {
+
+        alert(
+            "❌ La serie no puede quedar vacía."
+        );
+
+        return;
+    }
+
+
+    if (
+        serieLimpia ===
+        serieActual
+    ) {
+
+        return;
+    }
+
+
+    try {
+
+        const respuesta =
+            await fetch(
+                "/api/colectores/" +
+                encodeURIComponent(
+                    deviceId
+                ),
+                {
+                    method: "PUT",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        serie:
+                            serieLimpia
+                    })
+                }
+            );
+
+
+        const resultado =
+            await respuesta.json();
+
+
+        if (!respuesta.ok) {
+
+            alert(
+                "❌ " +
+                (
+                    resultado.error ||
+                    "No se pudo editar la serie"
+                )
+            );
+
+            return;
+        }
+
+
+        alert(
+            "✅ Serie actualizada correctamente."
+        );
+
+
+        await actualizarColectores();
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Error editando serie:",
+            error
+        );
+
+
+        alert(
+            "❌ Error de conexión con el servidor."
+        );
+    }
+}
+
+
+// ==========================================
+// ELIMINAR COLECTOR
+// ==========================================
+
+async function eliminarColector(
+    deviceId,
+    serie
+) {
+
+    const confirmar =
+        confirm(
+            "¿Seguro que desea eliminar el colector?\n\n" +
+            "Serie: " +
+            serie +
+            "\n\n" +
+            "Podrá restaurarlo después desde Colectores eliminados."
+        );
+
+
+    if (!confirmar) {
+        return;
+    }
+
+
+    try {
+
+        const respuesta =
+            await fetch(
+                "/api/colectores/" +
+                encodeURIComponent(
+                    deviceId
+                ),
+                {
+                    method: "DELETE"
+                }
+            );
+
+
+        const resultado =
+            await respuesta.json();
+
+
+        if (!respuesta.ok) {
+
+            alert(
+                "❌ " +
+                (
+                    resultado.error ||
+                    "No se pudo eliminar"
+                )
+            );
+
+            return;
+        }
+
+
+        // Quitar marcador del mapa
+        if (
+            marcadores[
+                deviceId
+            ]
+        ) {
+
+            mapa.removeLayer(
+                marcadores[
+                    deviceId
+                ]
+            );
+
+            delete marcadores[
+                deviceId
+            ];
+        }
+
+
+        alert(
+            "✅ Colector enviado a Eliminados."
+        );
+
+
+        await actualizarColectores();
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Error eliminando colector:",
+            error
+        );
+
+
+        alert(
+            "❌ Error de conexión con el servidor."
+        );
+    }
 }
 
 
@@ -187,13 +493,18 @@ function actualizarLista(
             "listaColectores"
         );
 
+
     lista.innerHTML = "";
 
 
     const ordenados =
         [...colectores].sort(
             (a, b) =>
-                a.device_id.localeCompare(
+                (
+                    a.serie ||
+                    a.device_id
+                ).localeCompare(
+                    b.serie ||
                     b.device_id
                 )
         );
@@ -208,10 +519,16 @@ function actualizarLista(
                 );
 
 
+            const serie =
+                colector.serie ||
+                colector.device_id;
+
+
             const item =
                 document.createElement(
                     "div"
                 );
+
 
             item.className =
                 estado.online
@@ -224,21 +541,55 @@ function actualizarLista(
                 <div class="colectorSerie">
 
                     <span>
-                        ${estado.online ? "🟢" : "🔴"}
+                        ${
+                            estado.online
+                                ? "🟢"
+                                : "🔴"
+                        }
                     </span>
 
                     <strong>
-                        ${colector.device_id}
+                        ${escapar(serie)}
                     </strong>
 
                 </div>
 
+
                 <div class="colectorInfo">
-                    🔋 ${colector.bateria ?? "-"}%
+
+                    🔋 ${
+                        colector.bateria ??
+                        "-"
+                    }%
+
+                </div>
+
+
+                <div class="accionesColector">
+
+                    <button
+                        class="botonEditar"
+                        type="button"
+                    >
+                        ✏️ Editar
+                    </button>
+
+
+                    <button
+                        class="botonEliminar"
+                        type="button"
+                    >
+                        🗑️ Eliminar
+                    </button>
+
                 </div>
 
             `;
 
+
+            // ==================================
+            // CLIC EN EL COLECTOR
+            // ==================================
 
             item.addEventListener(
                 "click",
@@ -246,6 +597,56 @@ function actualizarLista(
 
                     centrarColector(
                         colector.device_id
+                    );
+                }
+            );
+
+
+            // ==================================
+            // BOTÓN EDITAR
+            // ==================================
+
+            const botonEditar =
+                item.querySelector(
+                    ".botonEditar"
+                );
+
+
+            botonEditar.addEventListener(
+                "click",
+                function (event) {
+
+                    event.stopPropagation();
+
+
+                    editarSerie(
+                        colector.device_id,
+                        serie
+                    );
+                }
+            );
+
+
+            // ==================================
+            // BOTÓN ELIMINAR
+            // ==================================
+
+            const botonEliminar =
+                item.querySelector(
+                    ".botonEliminar"
+                );
+
+
+            botonEliminar.addEventListener(
+                "click",
+                function (event) {
+
+                    event.stopPropagation();
+
+
+                    eliminarColector(
+                        colector.device_id,
+                        serie
                     );
                 }
             );
@@ -260,33 +661,46 @@ function actualizarLista(
 
 
 // ==========================================
-// CENTRAR COLECTOR
+// ELIMINAR MARCADORES QUE YA NO ESTÁN ACTIVOS
 // ==========================================
 
-function centrarColector(
-    serie
+function limpiarMarcadores(
+    colectores
 ) {
 
-    const marcador =
-        marcadores[serie];
+    const idsActivos =
+        new Set(
+            colectores.map(
+                colector =>
+                    colector.device_id
+            )
+        );
 
-    if (!marcador) {
-        return;
-    }
 
-    const posicion =
-        marcador.getLatLng();
+    Object.keys(
+        marcadores
+    ).forEach(
+        deviceId => {
 
-    mapa.flyTo(
-        posicion,
-        19,
-        {
-            animate: true,
-            duration: 1.2
+            if (
+                !idsActivos.has(
+                    deviceId
+                )
+            ) {
+
+                mapa.removeLayer(
+                    marcadores[
+                        deviceId
+                    ]
+                );
+
+
+                delete marcadores[
+                    deviceId
+                ];
+            }
         }
     );
-
-    marcador.openPopup();
 }
 
 
@@ -302,35 +716,60 @@ async function actualizarColectores() {
             await fetch(
                 "/api/ubicaciones",
                 {
-                    cache: "no-store"
+                    cache:
+                        "no-store"
                 }
             );
 
-        if (!respuesta.ok) {
+
+        if (
+            !respuesta.ok
+        ) {
 
             throw new Error(
                 `HTTP ${respuesta.status}`
             );
         }
 
+
         const colectores =
             await respuesta.json();
+
 
         datosColectores =
             colectores;
 
 
-        // Estadísticas
+        // ==================================
+        // LIMPIAR MARCADORES DESACTIVADOS
+        // ==================================
+
+        limpiarMarcadores(
+            colectores
+        );
+
+
+        // ==================================
+        // ESTADÍSTICAS
+        // ==================================
+
         actualizarEstadisticas(
             colectores
         );
 
 
-        // Lista lateral
+        // ==================================
+        // LISTA
+        // ==================================
+
         actualizarLista(
             colectores
         );
 
+
+        // ==================================
+        // MARCADORES
+        // ==================================
 
         colectores.forEach(
             colector => {
@@ -340,15 +779,18 @@ async function actualizarColectores() {
                         colector.latitud
                     );
 
+
                 const longitud =
                     parseFloat(
                         colector.longitud
                     );
 
+
                 if (
                     isNaN(latitud) ||
                     isNaN(longitud)
                 ) {
+
                     return;
                 }
 
@@ -365,27 +807,56 @@ async function actualizarColectores() {
                     );
 
 
+                const serie =
+                    colector.serie ||
+                    colector.device_id;
+
+
                 const texto = `
 
                     <div class="popupColector">
 
                         <div class="popupTitulo">
-                            📱 ${colector.device_id}
+
+                            📱
+                            ${escapar(serie)}
+
                         </div>
 
+
                         <div class="popupFila">
-                            <strong>Estado:</strong>
+
+                            <strong>
+                                Estado:
+                            </strong>
+
                             ${estado.texto}
+
                         </div>
 
-                        <div class="popupFila">
-                            <strong>Batería:</strong>
-                            🔋 ${colector.bateria ?? "Sin datos"}%
-                        </div>
 
                         <div class="popupFila">
-                            <strong>Última conexión:</strong>
+
+                            <strong>
+                                Batería:
+                            </strong>
+
+                            🔋 ${
+                                colector.bateria ??
+                                "Sin datos"
+                            }%
+
+                        </div>
+
+
+                        <div class="popupFila">
+
+                            <strong>
+                                Última conexión:
+                            </strong>
+
                             ${ultimaConexion}
+
                         </div>
 
                     </div>
@@ -430,7 +901,9 @@ async function actualizarColectores() {
                                 longitud
                             ]
                         )
-                        .addTo(mapa)
+                        .addTo(
+                            mapa
+                        )
                         .bindPopup(
                             texto
                         );
@@ -452,7 +925,7 @@ async function actualizarColectores() {
 
 
 // ==========================================
-// BUSCAR COLECTOR
+// BUSCAR COLECTOR POR SERIE
 // ==========================================
 
 function buscarColector() {
@@ -461,6 +934,7 @@ function buscarColector() {
         document.getElementById(
             "buscarColector"
         );
+
 
     const mensaje =
         document.getElementById(
@@ -483,44 +957,59 @@ function buscarColector() {
     }
 
 
-    const series =
-        Object.keys(
-            marcadores
-        );
+    // ======================================
+    // COINCIDENCIA EXACTA
+    // ======================================
 
+    let colectorEncontrado =
+        datosColectores.find(
+            colector =>
 
-    let serieEncontrada =
-        series.find(
-            serie =>
-                serie.toUpperCase() ===
+                (
+                    colector.serie ||
+                    colector.device_id
+                )
+                .toUpperCase() ===
                 busqueda
         );
 
 
-    if (!serieEncontrada) {
+    // ======================================
+    // COINCIDENCIA PARCIAL
+    // ======================================
+
+    if (
+        !colectorEncontrado
+    ) {
 
         const coincidencias =
-            series.filter(
-                serie =>
-                    serie
-                        .toUpperCase()
-                        .includes(
-                            busqueda
-                        )
+            datosColectores.filter(
+                colector =>
+
+                    (
+                        colector.serie ||
+                        colector.device_id
+                    )
+                    .toUpperCase()
+                    .includes(
+                        busqueda
+                    )
             );
 
 
         if (
-            coincidencias.length === 1
+            coincidencias.length ===
+            1
         ) {
 
-            serieEncontrada =
+            colectorEncontrado =
                 coincidencias[0];
 
         }
 
         else if (
-            coincidencias.length > 1
+            coincidencias.length >
+            1
         ) {
 
             mensaje.textContent =
@@ -531,7 +1020,13 @@ function buscarColector() {
     }
 
 
-    if (!serieEncontrada) {
+    // ======================================
+    // NO ENCONTRADO
+    // ======================================
+
+    if (
+        !colectorEncontrado
+    ) {
 
         mensaje.textContent =
             "❌ Colector no encontrado";
@@ -540,13 +1035,18 @@ function buscarColector() {
     }
 
 
+    const serie =
+        colectorEncontrado.serie ||
+        colectorEncontrado.device_id;
+
+
     centrarColector(
-        serieEncontrada
+        colectorEncontrado.device_id
     );
 
 
     mensaje.textContent =
-        `✅ ${serieEncontrada}`;
+        `✅ ${serie}`;
 }
 
 
@@ -563,6 +1063,7 @@ document.addEventListener(
                 "buscarColector"
             );
 
+
         if (input) {
 
             input.addEventListener(
@@ -570,7 +1071,8 @@ document.addEventListener(
                 function (event) {
 
                     if (
-                        event.key === "Enter"
+                        event.key ===
+                        "Enter"
                     ) {
 
                         buscarColector();

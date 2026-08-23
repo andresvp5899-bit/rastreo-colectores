@@ -35,18 +35,48 @@
         <div id="estadisticas">
 
             <div class="tarjetaEstadistica">
-                <span class="numero" id="totalColectores">0</span>
-                <span class="texto">Total</span>
+                <span
+                    class="numero"
+                    id="totalColectores"
+                >
+                    0
+                </span>
+
+                <span class="texto">
+                    Total
+                </span>
             </div>
+
 
             <div class="tarjetaEstadistica online">
-                <span class="numero" id="totalOnline">0</span>
-                <span class="texto">En línea</span>
+
+                <span
+                    class="numero"
+                    id="totalOnline"
+                >
+                    0
+                </span>
+
+                <span class="texto">
+                    En línea
+                </span>
+
             </div>
 
+
             <div class="tarjetaEstadistica offline">
-                <span class="numero" id="totalOffline">0</span>
-                <span class="texto">Desconectados</span>
+
+                <span
+                    class="numero"
+                    id="totalOffline"
+                >
+                    0
+                </span>
+
+                <span class="texto">
+                    Desconectados
+                </span>
+
             </div>
 
         </div>
@@ -62,13 +92,27 @@
                 placeholder="Buscar por serie..."
             >
 
-            <button onclick="buscarColector()">
+            <button
+                onclick="buscarColector()"
+            >
                 🔎 Buscar
             </button>
 
         </div>
 
-        <div id="mensajeBusqueda"></div>
+
+        <!-- BOTÓN ELIMINADOS -->
+
+        <a
+            href="/colectores/eliminados"
+            id="botonEliminados"
+        >
+            🗑️ Eliminados
+        </a>
+
+
+        <div id="mensajeBusqueda">
+        </div>
 
     </div>
 
@@ -80,8 +124,13 @@
     <div id="panelLateral">
 
         <div class="tituloLista">
-            Colectores
+
+            <span>
+                Colectores
+            </span>
+
         </div>
+
 
         <div id="listaColectores">
 
@@ -96,7 +145,8 @@
          MAPA
     ================================= -->
 
-    <div id="map"></div>
+    <div id="map">
+    </div>
 
 
     <!-- Leaflet -->

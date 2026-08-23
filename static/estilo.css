@@ -541,3 +541,212 @@ body {
         text-align: center;
     }
 }
+
+/* ==========================================
+   BOTÓN COLECTORES ELIMINADOS
+========================================== */
+
+#botonEliminados {
+    padding: 11px 16px;
+
+    border-radius: 12px;
+
+    background: #fef2f2;
+
+    color: #dc2626;
+
+    border: 1px solid #fecaca;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    text-decoration: none;
+
+    transition: 0.2s ease;
+
+    white-space: nowrap;
+}
+
+
+#botonEliminados:hover {
+    background: #fee2e2;
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 5px 14px rgba(220, 38, 38, 0.15);
+}
+
+/* ==========================================
+   ACCIONES DEL COLECTOR
+========================================== */
+
+.accionesColector {
+    display: flex;
+    gap: 8px;
+
+    margin-top: 12px;
+    padding-top: 10px;
+
+    border-top: 1px solid #e5e7eb;
+}
+
+
+/* ==========================================
+   BOTÓN EDITAR
+========================================== */
+
+.botonEditar {
+    flex: 1;
+
+    padding: 8px 10px;
+
+    border: 1px solid #bfdbfe;
+
+    border-radius: 9px;
+
+    background: #eff6ff;
+
+    color: #2563eb;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition: all 0.2s ease;
+}
+
+
+.botonEditar:hover {
+    background: #dbeafe;
+
+    border-color: #93c5fd;
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 4px 10px rgba(37, 99, 235, 0.15);
+}
+
+
+.botonEditar:active {
+    transform: translateY(0);
+}
+
+
+/* ==========================================
+   BOTÓN ELIMINAR
+========================================== */
+
+.botonEliminar {
+    flex: 1;
+
+    padding: 8px 10px;
+
+    border: 1px solid #fecaca;
+
+    border-radius: 9px;
+
+    background: #fef2f2;
+
+    color: #dc2626;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition: all 0.2s ease;
+}
+
+
+.botonEliminar:hover {
+    background: #fee2e2;
+
+    border-color: #fca5a5;
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 4px 10px rgba(220, 38, 38, 0.15);
+}
+
+
+.botonEliminar:active {
+    transform: translateY(0);
+}
+
+
+/* ==========================================
+   BOTÓN COLECTORES ELIMINADOS
+========================================== */
+
+#botonEliminados {
+    padding: 11px 16px;
+
+    border-radius: 12px;
+
+    background: #fef2f2;
+
+    color: #dc2626;
+
+    border: 1px solid #fecaca;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    text-decoration: none;
+
+    transition: 0.2s ease;
+
+    white-space: nowrap;
+}
+
+
+#botonEliminados:hover {
+    background: #fee2e2;
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 5px 14px rgba(220, 38, 38, 0.15);
+}
+
+
+/* ==========================================
+   MEJORA TARJETA DEL COLECTOR
+========================================== */
+
+.colectorItem {
+    position: relative;
+}
+
+
+.colectorItem:hover .accionesColector {
+    opacity: 1;
+}
+
+
+/* ==========================================
+   RESPONSIVE DE BOTONES
+========================================== */
+
+@media (max-width: 700px) {
+
+    .accionesColector {
+        flex-direction: column;
+    }
+
+
+    .botonEditar,
+    .botonEliminar {
+        width: 100%;
+    }
+
+
+    #botonEliminados {
+        text-align: center;
+        width: 100%;
+    }
+}

@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Colectores eliminados</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #f3f6fb;
+            color: #1f2937;
+        }
+
+        .contenedor {
+            max-width: 1200px;
+            margin: auto;
+            padding: 35px;
+        }
+
+        .encabezado {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            gap: 20px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .subtitulo {
+            margin-top: 6px;
+            color: #64748b;
+        }
+
+        .volver {
+            text-decoration: none;
+            background: #2563eb;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .volver:hover {
+            background: #1d4ed8;
+        }
+
+        .tarjeta {
+            background: white;
+            border-radius: 18px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, .08);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f8fafc;
+            text-align: left;
+            padding: 16px;
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        td {
+            padding: 16px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background: #f8fafc;
+        }
+
+        .serie {
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .eliminado {
+            display: inline-block;
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 6px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .restaurar {
+            border: none;
+            background: #16a34a;
+            color: white;
+            padding: 9px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .restaurar:hover {
+            background: #15803d;
+        }
+
+        #vacio {
+            display: none;
+            text-align: center;
+            padding: 50px;
+            color: #64748b;
+        }
+
+        @media (max-width: 800px) {
+
+            .contenedor {
+                padding: 18px;
+            }
+
+            .encabezado {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .volver {
+                text-align: center;
+            }
+
+            .tarjeta {
+                overflow-x: auto;
+            }
+
+            table {
+                min-width: 850px;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="contenedor">
+
+    <div class="encabezado">
+
+        <div>
+            <h1>
+                🗑️ Colectores eliminados
+            </h1>
+
+            <div class="subtitulo">
+                Desde aquí podés restaurar colectores que fueron eliminados del mapa.
+            </div>
+        </div>
+
+        <a
+            href="/mapa"
+            class="volver"
+        >
+            ← Volver al mapa
+        </a>
+
+    </div>
+
+
+    <div class="tarjeta">
+
+        <table id="tabla">
+
+            <thead>
+
+                <tr>
+                    <th>Serie</th>
+                    <th>ID técnico</th>
+                    <th>Batería</th>
+                    <th>Última conexión</th>
+                    <th>Estado</th>
+                    <th>Acción</th>
+                </tr>
+
+            </thead>
+
+
+            <tbody id="lista">
+            </tbody>
+
+        </table>
+
+
+        <div id="vacio">
+            ✅ No hay colectores eliminados.
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+async function cargarEliminados() {
+
+    try {
+
+        const respuesta =
+            await fetch(
+                "/api/colectores/eliminados",
+                {
+                    cache: "no-store"
+                }
+            );
+
+
+        if (!respuesta.ok) {
+
+            throw new Error(
+                `HTTP ${respuesta.status}`
+            );
+        }
+
+
+        const colectores =
+            await respuesta.json();
+
+
+        const lista =
+            document.getElementById(
+                "lista"
+            );
+
+        const tabla =
+            document.getElementById(
+                "tabla"
+            );
+
+        const vacio =
+            document.getElementById(
+                "vacio"
+            );
+
+
+        lista.innerHTML = "";
+
+
+        if (
+            colectores.length === 0
+        ) {
+
+            tabla.style.display =
+                "none";
+
+            vacio.style.display =
+                "block";
+
+            return;
+        }
+
+
+        tabla.style.display =
+            "table";
+
+        vacio.style.display =
+            "none";
+
+
+        colectores.forEach(
+            colector => {
+
+                const fila =
+                    document.createElement(
+                        "tr"
+                    );
+
+
+                let ultimaConexion =
+                    "Sin datos";
+
+
+                if (
+                    colector.ultima_conexion
+                ) {
+
+                    ultimaConexion =
+                        new Date(
+                            colector.ultima_conexion
+                        )
+                        .toLocaleString(
+                            "es-PY"
+                        );
+                }
+
+
+                fila.innerHTML = `
+
+                    <td class="serie">
+                        ${escapar(colector.serie)}
+                    </td>
+
+
+                    <td>
+                        ${escapar(colector.device_id)}
+                    </td>
+
+
+                    <td>
+                        ${
+                            colector.bateria ??
+                            "Sin datos"
+                        }%
+                    </td>
+
+
+                    <td>
+                        ${ultimaConexion}
+                    </td>
+
+
+                    <td>
+
+                        <span class="eliminado">
+                            ELIMINADO
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        <button
+                            class="restaurar"
+                            type="button"
+                        >
+                            ♻️ Restaurar
+                        </button>
+
+                    </td>
+
+                `;
+
+
+                const boton =
+                    fila.querySelector(
+                        ".restaurar"
+                    );
+
+
+                boton.addEventListener(
+                    "click",
+                    function () {
+
+                        restaurar(
+                            colector.device_id,
+                            colector.serie
+                        );
+                    }
+                );
+
+
+                lista.appendChild(
+                    fila
+                );
+            }
+        );
+
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Error cargando eliminados:",
+            error
+        );
+
+        alert(
+            "❌ No se pudieron cargar los colectores eliminados."
+        );
+    }
+
+}
+
+
+async function restaurar(
+    deviceId,
+    serie
+) {
+
+    const confirmar =
+        confirm(
+            "¿Desea restaurar este colector?\n\n" +
+            "Serie: " +
+            serie
+        );
+
+
+    if (!confirmar) {
+        return;
+    }
+
+
+    try {
+
+        const respuesta =
+            await fetch(
+
+                "/api/colectores/" +
+                encodeURIComponent(
+                    deviceId
+                ) +
+                "/activar",
+
+                {
+                    method: "PUT"
+                }
+
+            );
+
+
+        const resultado =
+            await respuesta.json();
+
+
+        if (!respuesta.ok) {
+
+            alert(
+                "❌ " +
+                (
+                    resultado.error ||
+                    "No se pudo restaurar"
+                )
+            );
+
+            return;
+        }
+
+
+        alert(
+            "✅ Colector restaurado correctamente."
+        );
+
+
+        cargarEliminados();
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Error restaurando colector:",
+            error
+        );
+
+        alert(
+            "❌ Error de conexión con el servidor."
+        );
+    }
+
+}
+
+
+function escapar(
+    texto
+) {
+
+    const elemento =
+        document.createElement(
+            "div"
+        );
+
+    elemento.textContent =
+        texto ?? "";
+
+    return elemento.innerHTML;
+}
+
+
+cargarEliminados();
+
+</script>
+
+</body>
+
+</html>
