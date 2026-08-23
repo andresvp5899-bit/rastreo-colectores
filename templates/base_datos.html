@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Base de datos - Colectores</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #f4f7fb;
+            color: #1f2937;
+        }
+
+        .contenedor {
+            max-width: 1400px;
+            margin: auto;
+            padding: 30px;
+        }
+
+
+        /* ==================================
+           MENÚ SUPERIOR
+        ================================== */
+
+        .menu {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+
+            background: white;
+
+            padding: 12px 16px;
+
+            border-radius: 15px;
+
+            box-shadow:
+                0 6px 20px rgba(0,0,0,.08);
+
+            margin-bottom: 25px;
+        }
+
+        .menu a {
+            text-decoration: none;
+
+            padding: 10px 16px;
+
+            border-radius: 10px;
+
+            color: #374151;
+
+            font-weight: 600;
+
+            transition: .2s;
+        }
+
+        .menu a:hover {
+            background: #f1f5f9;
+        }
+
+        .menu .activo {
+            background: #2563eb;
+            color: white;
+        }
+
+
+        /* ==================================
+           ENCABEZADO
+        ================================== */
+
+        h1 {
+            margin-bottom: 5px;
+        }
+
+        .subtitulo {
+            color: #64748b;
+            margin-bottom: 25px;
+        }
+
+
+        /* ==================================
+           BUSCADOR
+        ================================== */
+
+        .buscador {
+            display: flex;
+            gap: 10px;
+
+            margin-bottom: 20px;
+        }
+
+        .buscador input {
+            flex: 1;
+
+            padding: 12px 14px;
+
+            border: 1px solid #d1d5db;
+
+            border-radius: 10px;
+
+            font-size: 14px;
+
+            outline: none;
+        }
+
+        .buscador input:focus {
+            border-color: #2563eb;
+        }
+
+
+        /* ==================================
+           TABLA
+        ================================== */
+
+        .tarjeta {
+            background: white;
+
+            border-radius: 18px;
+
+            overflow: hidden;
+
+            box-shadow:
+                0 8px 30px rgba(0,0,0,.08);
+        }
+
+        table {
+            width: 100%;
+
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f8fafc;
+
+            padding: 15px;
+
+            text-align: left;
+
+            color: #64748b;
+
+            font-size: 13px;
+        }
+
+        td {
+            padding: 15px;
+
+            border-top: 1px solid #e5e7eb;
+
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background: #f8fafc;
+        }
+
+        .serie {
+            font-weight: 700;
+        }
+
+        .online {
+            color: #059669;
+            font-weight: 700;
+        }
+
+        .offline {
+            color: #dc2626;
+            font-weight: 700;
+        }
+
+
+        /* ==================================
+           RESPONSIVE
+        ================================== */
+
+        @media (max-width: 900px) {
+
+            .contenedor {
+                padding: 15px;
+            }
+
+            .menu {
+                flex-wrap: wrap;
+            }
+
+            .tarjeta {
+                overflow-x: auto;
+            }
+
+            table {
+                min-width: 1000px;
+            }
+        }
+
+    </style>
+</head>
+
+
+<body>
+
+<div class="contenedor">
+
+
+    <!-- ================================
+         MENÚ
+    ================================= -->
+
+    <div class="menu">
+
+        <a href="/mapa">
+            📍 Mapa
+        </a>
+
+        <a
+            href="/base-datos"
+            class="activo"
+        >
+            📋 Base de datos
+        </a>
+
+        <a href="/colectores/eliminados">
+            🗑️ Eliminados
+        </a>
+
+    </div>
+
+
+    <!-- ================================
+         ENCABEZADO
+    ================================= -->
+
+    <h1>
+        📋 Base de datos de colectores
+    </h1>
+
+    <div class="subtitulo">
+        Visualización de los colectores registrados en AWS.
+    </div>
+
+
+    <!-- ================================
+         BUSCADOR
+    ================================= -->
+
+    <div class="buscador">
+
+        <input
+            type="text"
+            id="buscar"
+            placeholder="Buscar por serie o ID técnico..."
+        >
+
+    </div>
+
+
+    <!-- ================================
+         TABLA
+    ================================= -->
+
+    <div class="tarjeta">
+
+        <table>
+
+            <thead>
+
+                <tr>
+                    <th>Serie</th>
+                    <th>ID técnico</th>
+                    <th>Estado</th>
+                    <th>Batería</th>
+                    <th>Latitud</th>
+                    <th>Longitud</th>
+                    <th>Última conexión</th>
+                    <th>Activo</th>
+                </tr>
+
+            </thead>
+
+
+            <tbody id="tablaColectores">
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+<script>
+
+let colectoresGlobal = [];
+
+
+async function cargarColectores() {
+
+    try {
+
+        const respuesta =
+            await fetch(
+                "/api/colectores",
+                {
+                    cache: "no-store"
+                }
+            );
+
+
+        const colectores =
+            await respuesta.json();
+
+
+        colectoresGlobal =
+            colectores;
+
+
+        mostrarColectores(
+            colectores
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Error cargando base de datos:",
+            error
+        );
+
+    }
+
+}
+
+
+function mostrarColectores(
+    colectores
+) {
+
+    const tabla =
+        document.getElementById(
+            "tablaColectores"
+        );
+
+
+    tabla.innerHTML = "";
+
+
+    colectores.forEach(
+        colector => {
+
+
+            let estadoTexto =
+                "🔴 DESCONECTADO";
+
+            let claseEstado =
+                "offline";
+
+
+            if (
+                colector.ultima_conexion
+            ) {
+
+                let fecha =
+                    new Date(
+                        colector.ultima_conexion
+                    );
+
+
+                let diferencia =
+                    (
+                        new Date() -
+                        fecha
+                    ) / 1000;
+
+
+                if (
+                    diferencia <= 60
+                ) {
+
+                    estadoTexto =
+                        "🟢 EN LÍNEA";
+
+                    claseEstado =
+                        "online";
+                }
+
+            }
+
+
+            let ultimaConexion =
+                "Sin datos";
+
+
+            if (
+                colector.ultima_conexion
+            ) {
+
+                ultimaConexion =
+                    new Date(
+                        colector.ultima_conexion
+                    )
+                    .toLocaleString(
+                        "es-PY"
+                    );
+            }
+
+
+            const fila =
+                document.createElement(
+                    "tr"
+                );
+
+
+            fila.innerHTML = `
+
+                <td class="serie">
+                    ${escapar(colector.serie)}
+                </td>
+
+                <td>
+                    ${escapar(colector.device_id)}
+                </td>
+
+                <td class="${claseEstado}">
+                    ${estadoTexto}
+                </td>
+
+                <td>
+                    ${
+                        colector.bateria ??
+                        "Sin datos"
+                    }%
+                </td>
+
+                <td>
+                    ${
+                        colector.latitud ??
+                        "-"
+                    }
+                </td>
+
+                <td>
+                    ${
+                        colector.longitud ??
+                        "-"
+                    }
+                </td>
+
+                <td>
+                    ${ultimaConexion}
+                </td>
+
+                <td>
+                    ${
+                        colector.activo
+                            ? "✅ Sí"
+                            : "❌ No"
+                    }
+                </td>
+
+            `;
+
+
+            tabla.appendChild(
+                fila
+            );
+
+        }
+    );
+
+}
+
+
+document.getElementById(
+    "buscar"
+)
+.addEventListener(
+    "input",
+    function () {
+
+        const texto =
+            this.value
+                .trim()
+                .toUpperCase();
+
+
+        const filtrados =
+            colectoresGlobal.filter(
+                colector => {
+
+                    const serie =
+                        (
+                            colector.serie ||
+                            ""
+                        )
+                        .toUpperCase();
+
+
+                    const id =
+                        (
+                            colector.device_id ||
+                            ""
+                        )
+                        .toUpperCase();
+
+
+                    return (
+                        serie.includes(texto) ||
+                        id.includes(texto)
+                    );
+
+                }
+            );
+
+
+        mostrarColectores(
+            filtrados
+        );
+
+    }
+);
+
+
+function escapar(
+    texto
+) {
+
+    const div =
+        document.createElement(
+            "div"
+        );
+
+    div.textContent =
+        texto ?? "";
+
+    return div.innerHTML;
+
+}
+
+
+cargarColectores();
+
+setInterval(
+    cargarColectores,
+    5000
+);
+
+</script>
+
+
+</body>
+
+</html>
