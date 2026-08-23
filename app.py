@@ -2,7 +2,6 @@ from flask import Flask, request, jsonify, render_template
 from datetime import datetime, timezone
 import sqlite3
 
-
 app = Flask(__name__)
 
 DB = "rastreo.db"
@@ -13,11 +12,8 @@ DB = "rastreo.db"
 # ==========================================
 
 def conectar_db():
-
     conexion = sqlite3.connect(DB)
-
     conexion.row_factory = sqlite3.Row
-
     return conexion
 
 
@@ -30,51 +26,28 @@ def crear_base_datos():
     conexion = conectar_db()
     cursor = conexion.cursor()
 
-
-    # ======================================
     # UBICACIÓN ACTUAL
-    # ======================================
-
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS ubicaciones (
-
             device_id TEXT PRIMARY KEY,
-
             latitud REAL NOT NULL,
-
             longitud REAL NOT NULL,
-
             bateria INTEGER,
-
             ultima_conexion TEXT NOT NULL
-
         )
     """)
 
-
-    # ======================================
     # REGISTRO DE COLECTORES
-    # ======================================
-
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS colectores (
-
             device_id TEXT PRIMARY KEY,
-
             serie TEXT UNIQUE NOT NULL,
-
             activo INTEGER NOT NULL DEFAULT 1,
-
             fecha_registro TEXT NOT NULL
-
         )
     """)
 
-
-    # ======================================
     # MIGRAR COLECTORES QUE YA EXISTÍAN
-    # ======================================
-
     cursor.execute("""
         SELECT device_id
         FROM ubicaciones
@@ -82,34 +55,23 @@ def crear_base_datos():
 
     existentes = cursor.fetchall()
 
-
     for fila in existentes:
 
         device_id = fila["device_id"]
 
         cursor.execute("""
             INSERT OR IGNORE INTO colectores (
-
                 device_id,
                 serie,
                 activo,
                 fecha_registro
-
             )
-
             VALUES (?, ?, 1, ?)
-
         """, (
-
             device_id,
             device_id,
-
-            datetime.now(
-                timezone.utc
-            ).isoformat()
-
+            datetime.now(timezone.utc).isoformat()
         ))
-
 
     conexion.commit()
     conexion.close()
@@ -126,12 +88,9 @@ crear_base_datos()
 def inicio():
 
     return jsonify({
-
         "estado": "ok",
-
         "mensaje":
             "Servidor de rastreo de colectores funcionando"
-
     })
 
 
@@ -149,16 +108,12 @@ def recibir_ubicacion():
         silent=True
     )
 
-
     if not datos:
 
         return jsonify({
-
             "error":
                 "No se recibieron datos"
-
         }), 400
-
 
     device_id = datos.get(
         "device_id"
@@ -176,16 +131,12 @@ def recibir_ubicacion():
         "bateria"
     )
 
-
     if not device_id:
 
         return jsonify({
-
             "error":
                 "Falta device_id"
-
         }), 400
-
 
     if (
         latitud is None or
@@ -193,111 +144,68 @@ def recibir_ubicacion():
     ):
 
         return jsonify({
-
             "error":
                 "Falta latitud o longitud"
-
         }), 400
-
 
     device_id = str(
         device_id
     ).strip()
 
-
     ultima_conexion = datetime.now(
         timezone.utc
     ).isoformat()
 
-
     conexion = conectar_db()
     cursor = conexion.cursor()
 
-
-    # ======================================
     # REGISTRAR COLECTOR SI ES NUEVO
-    # ======================================
-
     cursor.execute("""
         INSERT OR IGNORE INTO colectores (
-
             device_id,
             serie,
             activo,
             fecha_registro
-
         )
-
         VALUES (?, ?, 1, ?)
-
     """, (
-
         device_id,
         device_id,
         ultima_conexion
-
     ))
 
-
-    # ======================================
     # GUARDAR UBICACIÓN ACTUAL
-    # ======================================
-
     cursor.execute("""
         INSERT INTO ubicaciones (
-
             device_id,
             latitud,
             longitud,
             bateria,
             ultima_conexion
-
         )
-
         VALUES (?, ?, ?, ?, ?)
 
         ON CONFLICT(device_id)
-
         DO UPDATE SET
-
-            latitud =
-                excluded.latitud,
-
-            longitud =
-                excluded.longitud,
-
-            bateria =
-                excluded.bateria,
-
-            ultima_conexion =
-                excluded.ultima_conexion
-
+            latitud = excluded.latitud,
+            longitud = excluded.longitud,
+            bateria = excluded.bateria,
+            ultima_conexion = excluded.ultima_conexion
     """, (
-
         device_id,
         latitud,
         longitud,
         bateria,
         ultima_conexion
-
     ))
-
 
     conexion.commit()
     conexion.close()
 
-
     return jsonify({
-
-        "estado":
-            "ok",
-
-        "mensaje":
-            "Ubicacion recibida",
-
-        "device_id":
-            device_id
-
+        "estado": "ok",
+        "mensaje": "Ubicacion recibida",
+        "device_id": device_id
     })
 
 
@@ -314,46 +222,34 @@ def ver_ubicaciones():
     conexion = conectar_db()
     cursor = conexion.cursor()
 
-
     cursor.execute("""
         SELECT
-
             u.device_id,
-
             c.serie,
-
             u.latitud,
-
             u.longitud,
-
             u.bateria,
-
             u.ultima_conexion
 
         FROM ubicaciones u
 
         INNER JOIN colectores c
-
-            ON c.device_id =
-               u.device_id
+            ON c.device_id = u.device_id
 
         WHERE c.activo = 1
 
         ORDER BY c.serie
     """)
 
-
     filas = cursor.fetchall()
+
     conexion.close()
 
-
     colectores = []
-
 
     for fila in filas:
 
         colectores.append({
-
             "device_id":
                 fila["device_id"],
 
@@ -371,9 +267,7 @@ def ver_ubicaciones():
 
             "ultima_conexion":
                 fila["ultima_conexion"]
-
         })
-
 
     return jsonify(
         colectores
@@ -393,48 +287,34 @@ def obtener_colectores():
     conexion = conectar_db()
     cursor = conexion.cursor()
 
-
     cursor.execute("""
         SELECT
-
             c.device_id,
-
             c.serie,
-
             c.activo,
-
             c.fecha_registro,
-
             u.latitud,
-
             u.longitud,
-
             u.bateria,
-
             u.ultima_conexion
 
         FROM colectores c
 
         LEFT JOIN ubicaciones u
-
-            ON u.device_id =
-               c.device_id
+            ON u.device_id = c.device_id
 
         ORDER BY c.serie
     """)
 
-
     filas = cursor.fetchall()
+
     conexion.close()
 
-
     resultado = []
-
 
     for fila in filas:
 
         resultado.append({
-
             "device_id":
                 fila["device_id"],
 
@@ -458,9 +338,7 @@ def obtener_colectores():
 
             "ultima_conexion":
                 fila["ultima_conexion"]
-
         })
-
 
     return jsonify(
         resultado
@@ -481,144 +359,91 @@ def editar_colector(device_id):
         silent=True
     )
 
-
     if not datos:
 
         return jsonify({
-
             "error":
                 "No se recibieron datos"
-
         }), 400
-
 
     nueva_serie = datos.get(
         "serie"
     )
 
-
     if not nueva_serie:
 
         return jsonify({
-
             "error":
                 "Falta la nueva serie"
-
         }), 400
-
 
     nueva_serie = str(
         nueva_serie
     ).strip()
 
-
     conexion = conectar_db()
     cursor = conexion.cursor()
 
-
-    # ======================================
     # VERIFICAR COLECTOR
-    # ======================================
-
     cursor.execute("""
         SELECT device_id
-
         FROM colectores
-
         WHERE device_id = ?
     """, (
-
         device_id,
-
     ))
 
-
     colector = cursor.fetchone()
-
 
     if not colector:
 
         conexion.close()
 
         return jsonify({
-
             "error":
                 "Colector no encontrado"
-
         }), 404
 
-
-    # ======================================
     # VERIFICAR SERIE DUPLICADA
-    # ======================================
-
     cursor.execute("""
         SELECT device_id
-
         FROM colectores
-
         WHERE serie = ?
-
         AND device_id != ?
     """, (
-
         nueva_serie,
         device_id
-
     ))
 
-
     duplicado = cursor.fetchone()
-
 
     if duplicado:
 
         conexion.close()
 
         return jsonify({
-
             "error":
                 "Ya existe un colector con esa serie"
-
         }), 409
 
-
-    # ======================================
     # ACTUALIZAR
-    # ======================================
-
     cursor.execute("""
         UPDATE colectores
-
         SET serie = ?
-
         WHERE device_id = ?
     """, (
-
         nueva_serie,
         device_id
-
     ))
-
 
     conexion.commit()
     conexion.close()
 
-
     return jsonify({
-
-        "estado":
-            "ok",
-
-        "mensaje":
-            "Serie actualizada",
-
-        "device_id":
-            device_id,
-
-        "serie":
-            nueva_serie
-
+        "estado": "ok",
+        "mensaje": "Serie actualizada",
+        "device_id": device_id,
+        "serie": nueva_serie
     })
 
 
@@ -635,44 +460,30 @@ def eliminar_colector(device_id):
     conexion = conectar_db()
     cursor = conexion.cursor()
 
-
     cursor.execute("""
         UPDATE colectores
-
         SET activo = 0
-
         WHERE device_id = ?
     """, (
-
         device_id,
-
     ))
-
 
     if cursor.rowcount == 0:
 
         conexion.close()
 
         return jsonify({
-
             "error":
                 "Colector no encontrado"
-
         }), 404
-
 
     conexion.commit()
     conexion.close()
 
-
     return jsonify({
-
-        "estado":
-            "ok",
-
+        "estado": "ok",
         "mensaje":
             "Colector desactivado correctamente"
-
     })
 
 
@@ -689,44 +500,30 @@ def activar_colector(device_id):
     conexion = conectar_db()
     cursor = conexion.cursor()
 
-
     cursor.execute("""
         UPDATE colectores
-
         SET activo = 1
-
         WHERE device_id = ?
     """, (
-
         device_id,
-
     ))
-
 
     if cursor.rowcount == 0:
 
         conexion.close()
 
         return jsonify({
-
             "error":
                 "Colector no encontrado"
-
         }), 404
-
 
     conexion.commit()
     conexion.close()
 
-
     return jsonify({
-
-        "estado":
-            "ok",
-
+        "estado": "ok",
         "mensaje":
             "Colector activado correctamente"
-
     })
 
 
@@ -743,48 +540,35 @@ def colectores_eliminados():
     conexion = conectar_db()
     cursor = conexion.cursor()
 
-
     cursor.execute("""
         SELECT
-
             c.device_id,
-
             c.serie,
-
             c.fecha_registro,
-
             u.latitud,
-
             u.longitud,
-
             u.bateria,
-
             u.ultima_conexion
 
         FROM colectores c
 
         LEFT JOIN ubicaciones u
-
-            ON u.device_id =
-               c.device_id
+            ON u.device_id = c.device_id
 
         WHERE c.activo = 0
 
         ORDER BY c.serie
     """)
 
-
     filas = cursor.fetchall()
+
     conexion.close()
 
-
     resultado = []
-
 
     for fila in filas:
 
         resultado.append({
-
             "device_id":
                 fila["device_id"],
 
@@ -805,9 +589,7 @@ def colectores_eliminados():
 
             "ultima_conexion":
                 fila["ultima_conexion"]
-
         })
-
 
     return jsonify(
         resultado
@@ -825,6 +607,20 @@ def pagina_colectores_eliminados():
 
     return render_template(
         "eliminados.html"
+    )
+
+
+# ==========================================
+# PÁGINA BASE DE DATOS
+# ==========================================
+
+@app.route(
+    "/base-datos"
+)
+def base_datos():
+
+    return render_template(
+        "base_datos.html"
     )
 
 
@@ -847,11 +643,7 @@ def mapa():
 if __name__ == "__main__":
 
     app.run(
-
         host="0.0.0.0",
-
         port=5000,
-
         debug=True
-
     )
