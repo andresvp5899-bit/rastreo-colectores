@@ -22,14 +22,15 @@ L.tileLayer(
 
 
 // ==========================================
-// MARCADORES DE LOS COLECTORES
+// MARCADORES
 // ==========================================
 
 const marcadores = {};
+let datosColectores = [];
 
 
 // ==========================================
-// CALCULAR ESTADO DEL COLECTOR
+// ESTADO DEL COLECTOR
 // ==========================================
 
 function obtenerEstado(ultimaConexion) {
@@ -37,14 +38,12 @@ function obtenerEstado(ultimaConexion) {
     if (!ultimaConexion) {
         return {
             texto: "🔴 DESCONECTADO",
-            segundos: null
+            online: false
         };
     }
 
     let fechaTexto = ultimaConexion;
 
-    // El servidor AWS actualmente guarda la hora en UTC.
-    // Si la fecha no trae zona horaria, agregamos Z.
     if (
         !fechaTexto.endsWith("Z") &&
         !fechaTexto.includes("+")
@@ -58,7 +57,7 @@ function obtenerEstado(ultimaConexion) {
     if (isNaN(fechaUltimaConexion.getTime())) {
         return {
             texto: "🔴 DESCONECTADO",
-            segundos: null
+            online: false
         };
     }
 
@@ -66,40 +65,31 @@ function obtenerEstado(ultimaConexion) {
 
     const diferenciaSegundos =
         Math.floor(
-            (ahora.getTime() -
-                fechaUltimaConexion.getTime()) / 1000
+            (
+                ahora.getTime() -
+                fechaUltimaConexion.getTime()
+            ) / 1000
         );
-
-
-    // ======================================
-    // MENOS DE 60 SEGUNDOS
-    // ======================================
 
     if (
         diferenciaSegundos >= 0 &&
         diferenciaSegundos <= 60
     ) {
-
         return {
             texto: "🟢 EN LÍNEA",
-            segundos: diferenciaSegundos
+            online: true
         };
     }
 
-
-    // ======================================
-    // MÁS DE 60 SEGUNDOS
-    // ======================================
-
     return {
         texto: "🔴 DESCONECTADO",
-        segundos: diferenciaSegundos
+        online: false
     };
 }
 
 
 // ==========================================
-// FORMATEAR ÚLTIMA CONEXIÓN
+// FORMATEAR FECHA
 // ==========================================
 
 function formatearUltimaConexion(
@@ -141,6 +131,166 @@ function formatearUltimaConexion(
 
 
 // ==========================================
+// ACTUALIZAR ESTADÍSTICAS
+// ==========================================
+
+function actualizarEstadisticas(
+    colectores
+) {
+
+    let online = 0;
+    let offline = 0;
+
+    colectores.forEach(
+        colector => {
+
+            const estado =
+                obtenerEstado(
+                    colector.ultima_conexion
+                );
+
+            if (estado.online) {
+                online++;
+            } else {
+                offline++;
+            }
+        }
+    );
+
+    document.getElementById(
+        "totalColectores"
+    ).textContent =
+        colectores.length;
+
+    document.getElementById(
+        "totalOnline"
+    ).textContent =
+        online;
+
+    document.getElementById(
+        "totalOffline"
+    ).textContent =
+        offline;
+}
+
+
+// ==========================================
+// ACTUALIZAR LISTA LATERAL
+// ==========================================
+
+function actualizarLista(
+    colectores
+) {
+
+    const lista =
+        document.getElementById(
+            "listaColectores"
+        );
+
+    lista.innerHTML = "";
+
+
+    const ordenados =
+        [...colectores].sort(
+            (a, b) =>
+                a.device_id.localeCompare(
+                    b.device_id
+                )
+        );
+
+
+    ordenados.forEach(
+        colector => {
+
+            const estado =
+                obtenerEstado(
+                    colector.ultima_conexion
+                );
+
+
+            const item =
+                document.createElement(
+                    "div"
+                );
+
+            item.className =
+                estado.online
+                    ? "colectorItem online"
+                    : "colectorItem offline";
+
+
+            item.innerHTML = `
+
+                <div class="colectorSerie">
+
+                    <span>
+                        ${estado.online ? "🟢" : "🔴"}
+                    </span>
+
+                    <strong>
+                        ${colector.device_id}
+                    </strong>
+
+                </div>
+
+                <div class="colectorInfo">
+                    🔋 ${colector.bateria ?? "-"}%
+                </div>
+
+            `;
+
+
+            item.addEventListener(
+                "click",
+                function () {
+
+                    centrarColector(
+                        colector.device_id
+                    );
+                }
+            );
+
+
+            lista.appendChild(
+                item
+            );
+        }
+    );
+}
+
+
+// ==========================================
+// CENTRAR COLECTOR
+// ==========================================
+
+function centrarColector(
+    serie
+) {
+
+    const marcador =
+        marcadores[serie];
+
+    if (!marcador) {
+        return;
+    }
+
+    const posicion =
+        marcador.getLatLng();
+
+    mapa.flyTo(
+        posicion,
+        19,
+        {
+            animate: true,
+            duration: 1.2
+        }
+    );
+
+    marcador.openPopup();
+}
+
+
+// ==========================================
 // ACTUALIZAR COLECTORES
 // ==========================================
 
@@ -156,7 +306,6 @@ async function actualizarColectores() {
                 }
             );
 
-
         if (!respuesta.ok) {
 
             throw new Error(
@@ -164,9 +313,23 @@ async function actualizarColectores() {
             );
         }
 
-
         const colectores =
             await respuesta.json();
+
+        datosColectores =
+            colectores;
+
+
+        // Estadísticas
+        actualizarEstadisticas(
+            colectores
+        );
+
+
+        // Lista lateral
+        actualizarLista(
+            colectores
+        );
 
 
         colectores.forEach(
@@ -182,7 +345,6 @@ async function actualizarColectores() {
                         colector.longitud
                     );
 
-
                 if (
                     isNaN(latitud) ||
                     isNaN(longitud)
@@ -191,19 +353,11 @@ async function actualizarColectores() {
                 }
 
 
-                // ==================================
-                // ESTADO
-                // ==================================
-
                 const estado =
                     obtenerEstado(
                         colector.ultima_conexion
                     );
 
-
-                // ==================================
-                // ÚLTIMA CONEXIÓN FORMATEADA
-                // ==================================
 
                 const ultimaConexion =
                     formatearUltimaConexion(
@@ -211,54 +365,33 @@ async function actualizarColectores() {
                     );
 
 
-                // ==================================
-                // TEXTO DEL POPUP
-                // ==================================
-
                 const texto = `
 
-                    <div style="
-                        min-width: 220px;
-                        font-family: Arial, sans-serif;
-                    ">
+                    <div class="popupColector">
 
-                        <strong>
-                            Colector:
-                        </strong>
+                        <div class="popupTitulo">
+                            📱 ${colector.device_id}
+                        </div>
 
-                        ${colector.device_id}
+                        <div class="popupFila">
+                            <strong>Estado:</strong>
+                            ${estado.texto}
+                        </div>
 
-                        <br><br>
+                        <div class="popupFila">
+                            <strong>Batería:</strong>
+                            🔋 ${colector.bateria ?? "Sin datos"}%
+                        </div>
 
-                        <strong>
-                            Estado:
-                        </strong>
-
-                        ${estado.texto}
-
-                        <br>
-
-                        <strong>
-                            Batería:
-                        </strong>
-
-                        ${colector.bateria ?? "Sin datos"}%
-
-                        <br>
-
-                        <strong>
-                            Última conexión:
-                        </strong>
-
-                        ${ultimaConexion}
+                        <div class="popupFila">
+                            <strong>Última conexión:</strong>
+                            ${ultimaConexion}
+                        </div>
 
                     </div>
+
                 `;
 
-
-                // ==================================
-                // SI YA EXISTE EL COLECTOR
-                // ==================================
 
                 if (
                     marcadores[
@@ -286,26 +419,21 @@ async function actualizarColectores() {
 
                 }
 
-
-                // ==================================
-                // SI ES UN COLECTOR NUEVO
-                // ==================================
-
                 else {
 
                     marcadores[
                         colector.device_id
-                    ] = L.marker(
-                        [
-                            latitud,
-                            longitud
-                        ]
-                    )
-                    .addTo(mapa)
-                    .bindPopup(
-                        texto
-                    );
-
+                    ] =
+                        L.marker(
+                            [
+                                latitud,
+                                longitud
+                            ]
+                        )
+                        .addTo(mapa)
+                        .bindPopup(
+                            texto
+                        );
                 }
 
             }
@@ -321,6 +449,137 @@ async function actualizarColectores() {
         );
     }
 }
+
+
+// ==========================================
+// BUSCAR COLECTOR
+// ==========================================
+
+function buscarColector() {
+
+    const input =
+        document.getElementById(
+            "buscarColector"
+        );
+
+    const mensaje =
+        document.getElementById(
+            "mensajeBusqueda"
+        );
+
+
+    const busqueda =
+        input.value
+            .trim()
+            .toUpperCase();
+
+
+    if (!busqueda) {
+
+        mensaje.textContent =
+            "⚠️ Ingrese una serie";
+
+        return;
+    }
+
+
+    const series =
+        Object.keys(
+            marcadores
+        );
+
+
+    let serieEncontrada =
+        series.find(
+            serie =>
+                serie.toUpperCase() ===
+                busqueda
+        );
+
+
+    if (!serieEncontrada) {
+
+        const coincidencias =
+            series.filter(
+                serie =>
+                    serie
+                        .toUpperCase()
+                        .includes(
+                            busqueda
+                        )
+            );
+
+
+        if (
+            coincidencias.length === 1
+        ) {
+
+            serieEncontrada =
+                coincidencias[0];
+
+        }
+
+        else if (
+            coincidencias.length > 1
+        ) {
+
+            mensaje.textContent =
+                `⚠️ Hay ${coincidencias.length} coincidencias`;
+
+            return;
+        }
+    }
+
+
+    if (!serieEncontrada) {
+
+        mensaje.textContent =
+            "❌ Colector no encontrado";
+
+        return;
+    }
+
+
+    centrarColector(
+        serieEncontrada
+    );
+
+
+    mensaje.textContent =
+        `✅ ${serieEncontrada}`;
+}
+
+
+// ==========================================
+// ENTER PARA BUSCAR
+// ==========================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const input =
+            document.getElementById(
+                "buscarColector"
+            );
+
+        if (input) {
+
+            input.addEventListener(
+                "keydown",
+                function (event) {
+
+                    if (
+                        event.key === "Enter"
+                    ) {
+
+                        buscarColector();
+                    }
+                }
+            );
+        }
+    }
+);
 
 
 // ==========================================

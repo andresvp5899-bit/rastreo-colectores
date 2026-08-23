@@ -22,19 +22,92 @@
 
 <body>
 
-    <div id="titulo">
-        📍 Rastreo de Colectores
+    <!-- ================================
+         PANEL SUPERIOR
+    ================================= -->
+
+    <div id="panelSuperior">
+
+        <div id="titulo">
+            📍 Rastreo de Colectores
+        </div>
+
+        <div id="estadisticas">
+
+            <div class="tarjetaEstadistica">
+                <span class="numero" id="totalColectores">0</span>
+                <span class="texto">Total</span>
+            </div>
+
+            <div class="tarjetaEstadistica online">
+                <span class="numero" id="totalOnline">0</span>
+                <span class="texto">En línea</span>
+            </div>
+
+            <div class="tarjetaEstadistica offline">
+                <span class="numero" id="totalOffline">0</span>
+                <span class="texto">Desconectados</span>
+            </div>
+
+        </div>
+
+
+        <!-- BUSCADOR -->
+
+        <div id="buscador">
+
+            <input
+                type="text"
+                id="buscarColector"
+                placeholder="Buscar por serie..."
+            >
+
+            <button onclick="buscarColector()">
+                🔎 Buscar
+            </button>
+
+        </div>
+
+        <div id="mensajeBusqueda"></div>
+
     </div>
+
+
+    <!-- ================================
+         PANEL LATERAL
+    ================================= -->
+
+    <div id="panelLateral">
+
+        <div class="tituloLista">
+            Colectores
+        </div>
+
+        <div id="listaColectores">
+
+            <!-- Se genera desde mapa.js -->
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================
+         MAPA
+    ================================= -->
 
     <div id="map"></div>
 
 
     <!-- Leaflet -->
+
     <script
         src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
     </script>
 
+
     <!-- Nuestro JavaScript -->
+
     <script
         src="{{ url_for('static', filename='mapa.js') }}">
     </script>
