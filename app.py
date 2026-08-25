@@ -1,10 +1,15 @@
 from flask import Flask, request, jsonify, render_template
 from datetime import datetime, timezone
 import sqlite3
+import os
+import secrets
+import subprocess
 
 app = Flask(__name__)
 
 DB = "rastreo.db"
+DEPLOY_SCRIPT = "/home/andres_vazquez/deploy-rastreo.sh"
+DEPLOY_LOG = "/tmp/rastreo-deploy.log"
 
 
 # ==========================================
@@ -750,6 +755,126 @@ def mapa():
     return render_template(
         "mapa.html"
     )
+
+
+
+# ==========================================
+# ADMINISTRACIÓN / DESPLIEGUE MANUAL
+# ==========================================
+
+def obtener_version_actual():
+    try:
+        resultado = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd="/home/andres_vazquez/rastreo-colectores",
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+
+        if resultado.returncode == 0:
+            return resultado.stdout.strip()
+
+    except Exception:
+        pass
+
+    return "desconocida"
+
+
+@app.route("/admin", methods=["GET"])
+def admin():
+
+    return render_template(
+        "admin.html",
+        version=obtener_version_actual(),
+        mensaje=None,
+        error=None
+    )
+
+
+@app.route("/admin/deploy", methods=["POST"])
+def admin_deploy():
+
+    clave_ingresada = request.form.get(
+        "clave",
+        ""
+    )
+
+    clave_correcta = os.environ.get(
+        "DEPLOY_PASSWORD",
+        ""
+    )
+
+    if not clave_correcta:
+
+        return render_template(
+            "admin.html",
+            version=obtener_version_actual(),
+            mensaje=None,
+            error=(
+                "DEPLOY_PASSWORD todavía no está "
+                "configurada en el servidor."
+            )
+        ), 503
+
+    if not secrets.compare_digest(
+        clave_ingresada,
+        clave_correcta
+    ):
+
+        return render_template(
+            "admin.html",
+            version=obtener_version_actual(),
+            mensaje=None,
+            error="Clave incorrecta."
+        ), 403
+
+    if not os.path.isfile(DEPLOY_SCRIPT):
+
+        return render_template(
+            "admin.html",
+            version=obtener_version_actual(),
+            mensaje=None,
+            error="No se encontró deploy-rastreo.sh."
+        ), 500
+
+    try:
+        log = open(
+            DEPLOY_LOG,
+            "w",
+            encoding="utf-8"
+        )
+
+        subprocess.Popen(
+            [
+                "bash",
+                "-lc",
+                f"sleep 2; exec {DEPLOY_SCRIPT}"
+            ],
+            stdout=log,
+            stderr=subprocess.STDOUT,
+            start_new_session=True
+        )
+
+        return render_template(
+            "admin.html",
+            version=obtener_version_actual(),
+            mensaje=(
+                "Actualización iniciada. "
+                "Esperá unos 15 segundos y "
+                "volvé a abrir esta página."
+            ),
+            error=None
+        )
+
+    except Exception as e:
+
+        return render_template(
+            "admin.html",
+            version=obtener_version_actual(),
+            mensaje=None,
+            error=f"No se pudo iniciar el despliegue: {e}"
+        ), 500
 
 
 # ==========================================

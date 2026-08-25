@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración - Rastreo de Colectores</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1f2937;
+        }
+        .card {
+            width: min(520px, calc(100% - 32px));
+            background: white;
+            border-radius: 18px;
+            padding: 32px;
+            box-shadow: 0 14px 40px rgba(0,0,0,.12);
+        }
+        h1 { margin: 0 0 10px; font-size: 26px; }
+        .version { margin-bottom: 24px; color: #6b7280; }
+        .aviso, .ok, .error {
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 20px;
+        }
+        .aviso { background: #fff7ed; border: 1px solid #fed7aa; }
+        .ok { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
+        .error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+        label { display: block; margin-bottom: 8px; font-weight: 700; }
+        input {
+            width: 100%;
+            padding: 13px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 16px;
+        }
+        button {
+            width: 100%;
+            border: 0;
+            border-radius: 11px;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            background: #111827;
+            color: white;
+        }
+        .volver {
+            display: block;
+            text-align: center;
+            margin-top: 18px;
+            color: #4b5563;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>🚀 Actualizar Producción</h1>
+    <div class="version">
+        Versión actual: <strong>{{ version }}</strong>
+    </div>
+
+    <div class="aviso">
+        Subí primero tus cambios a GitHub.
+        Este botón actualizará manualmente el servidor
+        con la rama <strong>main</strong>.
+    </div>
+
+    {% if mensaje %}
+        <div class="ok">{{ mensaje }}</div>
+    {% endif %}
+
+    {% if error %}
+        <div class="error">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST" action="/admin/deploy"
+          onsubmit="return confirmarDeploy();">
+
+        <label for="clave">Clave de despliegue</label>
+
+        <input
+            id="clave"
+            name="clave"
+            type="password"
+            autocomplete="current-password"
+            required
+        >
+
+        <button type="submit">
+            ACTUALIZAR PRODUCCIÓN
+        </button>
+    </form>
+
+    <a class="volver" href="/mapa">← Volver al mapa</a>
+</div>
+
+<script>
+function confirmarDeploy() {
+    return confirm(
+        "¿Actualizar producción con la última versión de GitHub?"
+    );
+}
+</script>
+</body>
+</html>
