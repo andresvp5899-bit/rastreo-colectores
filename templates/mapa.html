@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Rastreo de Colectores</title>
+
+    <!-- Leaflet -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    >
+
+    <!-- Nuestro CSS -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='estilo.css') }}"
+    >
+</head>
+
+<body>
+
+    <!-- ================================
+         PANEL SUPERIOR
+    ================================= -->
+
+    <div id="panelSuperior">
+
+        <div id="titulo">
+            📍 Rastreo de Colectores
+        </div>
+
+        <div id="estadisticas">
+
+            <div class="tarjetaEstadistica">
+                <span
+                    class="numero"
+                    id="totalColectores"
+                >
+                    0
+                </span>
+
+                <span class="texto">
+                    Total
+                </span>
+            </div>
+
+
+            <div class="tarjetaEstadistica online">
+
+                <span
+                    class="numero"
+                    id="totalOnline"
+                >
+                    0
+                </span>
+
+                <span class="texto">
+                    En línea
+                </span>
+
+            </div>
+
+
+            <div class="tarjetaEstadistica offline">
+
+                <span
+                    class="numero"
+                    id="totalOffline"
+                >
+                    0
+                </span>
+
+                <span class="texto">
+                    Desconectados
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- BUSCADOR -->
+
+        <div id="buscador">
+
+            <input
+                type="text"
+                id="buscarColector"
+                placeholder="Buscar por serie..."
+            >
+
+            <button
+                onclick="buscarColector()"
+            >
+                🔎 Buscar
+            </button>
+
+        </div>
+
+
+        <!-- BOTÓN ELIMINADOS -->
+
+        <a
+            href="/colectores/eliminados"
+            id="botonEliminados"
+        >
+            🗑️ Eliminados
+        </a>
+
+
+        <div id="mensajeBusqueda">
+        </div>
+
+    </div>
+
+
+    <!-- ================================
+         PANEL LATERAL
+    ================================= -->
+
+    <div id="panelLateral">
+
+        <div class="tituloLista">
+
+            <span>
+                Colectores
+            </span>
+
+        </div>
+
+
+        <div id="listaColectores">
+
+            <!-- Se genera desde mapa.js -->
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================
+         MAPA
+    ================================= -->
+
+    <div id="map">
+    </div>
+
+
+    <!-- Leaflet -->
+
+    <script
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+    </script>
+
+
+    <!-- Nuestro JavaScript -->
+
+    <script
+        src="{{ url_for('static', filename='mapa.js') }}">
+    </script>
+
+</body>
+
+</html>

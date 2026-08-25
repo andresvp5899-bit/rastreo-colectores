@@ -1,0 +1,6 @@
+rastreo.db
+rastreo.db.*
+__pycache__/
+*.pyc
+venv/
+.env
