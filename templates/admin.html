@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Administración - Rastreo de Colectores</title>
+    <title>Panel de Producción</title>
     <style>
         * { box-sizing: border-box; }
         body {
@@ -11,24 +11,42 @@
             min-height: 100vh;
             font-family: Arial, sans-serif;
             background: #f4f6f8;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             color: #1f2937;
+            padding: 32px 16px;
         }
+        .contenedor { width: min(900px, 100%); margin: 0 auto; }
         .card {
-            width: min(520px, calc(100% - 32px));
             background: white;
             border-radius: 18px;
-            padding: 32px;
-            box-shadow: 0 14px 40px rgba(0,0,0,.12);
+            padding: 30px;
+            box-shadow: 0 14px 40px rgba(0,0,0,.10);
+            margin-bottom: 24px;
         }
-        h1 { margin: 0 0 10px; font-size: 26px; }
-        .version { margin-bottom: 24px; color: #6b7280; }
+        h1 { margin: 0 0 24px; font-size: 28px; }
+        h2 { margin: 0 0 18px; font-size: 21px; }
+        .datos {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 26px;
+        }
+        .dato {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 16px;
+            background: #fafafa;
+        }
+        .dato span {
+            display: block;
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 6px;
+        }
+        .estado { color: #15803d; }
         .aviso, .ok, .error {
             border-radius: 12px;
             padding: 14px;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
         }
         .aviso { background: #fff7ed; border: 1px solid #fed7aa; }
         .ok { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
@@ -53,55 +71,140 @@
             background: #111827;
             color: white;
         }
+        .tabla-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+            white-space: nowrap;
+        }
+        th { background: #f9fafb; font-size: 13px; color: #4b5563; }
+        .correcto { color: #15803d; font-weight: 700; }
+        .fallo { color: #b91c1c; font-weight: 700; }
         .volver {
-            display: block;
-            text-align: center;
+            display: inline-block;
             margin-top: 18px;
             color: #4b5563;
             text-decoration: none;
         }
+        @media (max-width: 650px) {
+            .datos { grid-template-columns: 1fr; }
+            .card { padding: 22px; }
+        }
     </style>
 </head>
 <body>
-<div class="card">
-    <h1>🚀 Actualizar Producción</h1>
-    <div class="version">
-        Versión actual: <strong>{{ version }}</strong>
+<div class="contenedor">
+
+    <div class="card">
+        <h1>🚀 Panel de Producción</h1>
+
+        <div class="datos">
+            <div class="dato">
+                <span>Estado</span>
+                <strong class="estado">🟢 {{ estado }}</strong>
+            </div>
+
+            <div class="dato">
+                <span>Versión instalada</span>
+                <strong>{{ version }}</strong>
+            </div>
+
+            <div class="dato">
+                <span>Rama</span>
+                <strong>{{ rama }}</strong>
+            </div>
+
+            <div class="dato">
+                <span>Última actualización</span>
+                <strong>{{ ultima_actualizacion }}</strong>
+            </div>
+        </div>
+
+        <div class="aviso">
+            Primero subí tus cambios a GitHub.
+            El servidor solo se actualizará cuando presiones el botón.
+        </div>
+
+        {% if mensaje %}
+            <div class="ok">{{ mensaje }}</div>
+        {% endif %}
+
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST"
+              action="/admin/deploy"
+              onsubmit="return confirmarDeploy();">
+
+            <label for="usuario">👤 Usuario</label>
+            <input
+                id="usuario"
+                name="usuario"
+                type="text"
+                value="admin"
+                autocomplete="username"
+                required
+            >
+
+            <label for="clave">🔐 Clave de despliegue</label>
+            <input
+                id="clave"
+                name="clave"
+                type="password"
+                autocomplete="current-password"
+                required
+            >
+
+            <button type="submit">
+                ACTUALIZAR PRODUCCIÓN
+            </button>
+        </form>
+
+        <a class="volver" href="/mapa">← Volver al mapa</a>
     </div>
 
-    <div class="aviso">
-        Subí primero tus cambios a GitHub.
-        Este botón actualizará manualmente el servidor
-        con la rama <strong>main</strong>.
+    <div class="card">
+        <h2>📋 Historial de actualizaciones</h2>
+
+        {% if historial %}
+            <div class="tabla-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha y hora</th>
+                            <th>Versión anterior</th>
+                            <th>Versión instalada</th>
+                            <th>Rama</th>
+                            <th>Resultado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in historial %}
+                            <tr>
+                                <td>{{ item.fecha_hora }}</td>
+                                <td>{{ item.version_anterior }}</td>
+                                <td>{{ item.version }}</td>
+                                <td>{{ item.rama }}</td>
+                                <td>
+                                    {% if item.resultado == "CORRECTO" %}
+                                        <span class="correcto">✅ Correcto</span>
+                                    {% else %}
+                                        <span class="fallo">❌ {{ item.resultado }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p>Todavía no hay actualizaciones registradas desde el panel.</p>
+        {% endif %}
     </div>
 
-    {% if mensaje %}
-        <div class="ok">{{ mensaje }}</div>
-    {% endif %}
-
-    {% if error %}
-        <div class="error">{{ error }}</div>
-    {% endif %}
-
-    <form method="POST" action="/admin/deploy"
-          onsubmit="return confirmarDeploy();">
-
-        <label for="clave">Clave de despliegue</label>
-
-        <input
-            id="clave"
-            name="clave"
-            type="password"
-            autocomplete="current-password"
-            required
-        >
-
-        <button type="submit">
-            ACTUALIZAR PRODUCCIÓN
-        </button>
-    </form>
-
-    <a class="volver" href="/mapa">← Volver al mapa</a>
 </div>
 
 <script>

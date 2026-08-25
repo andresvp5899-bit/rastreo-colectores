@@ -8,8 +8,11 @@ import subprocess
 app = Flask(__name__)
 
 DB = "rastreo.db"
-DEPLOY_SCRIPT = "/home/andres_vazquez/deploy-rastreo.sh"
+PROJECT_DIR = "/home/andres_vazquez/rastreo-colectores"
+DEPLOY_SCRIPT = "/home/andres_vazquez/rastreo-colectores/deploy.sh"
 DEPLOY_LOG = "/tmp/rastreo-deploy.log"
+DEPLOY_HISTORY = "/home/andres_vazquez/deploy-history.log"
+DEPLOY_BRANCH = "main"
 
 
 # ==========================================
@@ -762,14 +765,14 @@ def mapa():
 # ADMINISTRACIÓN / DESPLIEGUE MANUAL
 # ==========================================
 
-def obtener_version_actual():
+def ejecutar_git(argumentos, timeout=5):
     try:
         resultado = subprocess.run(
-            ["git", "rev-parse", "--short", "HEAD"],
-            cwd="/home/andres_vazquez/rastreo-colectores",
+            ["git", *argumentos],
+            cwd=PROJECT_DIR,
             capture_output=True,
             text=True,
-            timeout=5
+            timeout=timeout
         )
 
         if resultado.returncode == 0:
@@ -778,26 +781,110 @@ def obtener_version_actual():
     except Exception:
         pass
 
-    return "desconocida"
+    return None
+
+
+def obtener_version_actual():
+    version = ejecutar_git([
+        "rev-parse",
+        "--short",
+        "HEAD"
+    ])
+
+    return version or "desconocida"
+
+
+def obtener_fecha_commit_actual():
+    fecha = ejecutar_git([
+        "log",
+        "-1",
+        "--format=%cd",
+        "--date=format:%d/%m/%Y %H:%M"
+    ])
+
+    return fecha or "Sin datos"
+
+
+def leer_historial_deploy(limite=20):
+    historial = []
+
+    if not os.path.isfile(DEPLOY_HISTORY):
+        return historial
+
+    try:
+        with open(
+            DEPLOY_HISTORY,
+            "r",
+            encoding="utf-8"
+        ) as archivo:
+            lineas = archivo.readlines()
+
+        for linea in reversed(lineas[-limite:]):
+            partes = linea.strip().split("|")
+
+            if len(partes) != 5:
+                continue
+
+            fecha_hora, version_anterior, version_nueva, rama, resultado = partes
+
+            historial.append({
+                "fecha_hora": fecha_hora,
+                "version_anterior": version_anterior,
+                "version": version_nueva,
+                "rama": rama,
+                "resultado": resultado
+            })
+
+    except Exception:
+        return []
+
+    return historial
+
+
+def obtener_ultima_actualizacion(historial):
+    if historial:
+        return historial[0]["fecha_hora"]
+
+    return obtener_fecha_commit_actual()
+
+
+def datos_panel_admin(mensaje=None, error=None):
+    historial = leer_historial_deploy()
+
+    return {
+        "estado": "Producción funcionando",
+        "version": obtener_version_actual(),
+        "rama": DEPLOY_BRANCH,
+        "ultima_actualizacion": obtener_ultima_actualizacion(historial),
+        "historial": historial,
+        "mensaje": mensaje,
+        "error": error
+    }
 
 
 @app.route("/admin", methods=["GET"])
 def admin():
-
     return render_template(
         "admin.html",
-        version=obtener_version_actual(),
-        mensaje=None,
-        error=None
+        **datos_panel_admin()
     )
 
 
 @app.route("/admin/deploy", methods=["POST"])
 def admin_deploy():
+    usuario_ingresado = request.form.get(
+        "usuario",
+        ""
+    ).strip()
 
     clave_ingresada = request.form.get(
         "clave",
         ""
+    )
+
+    usuario_correcto = os.environ.get(
+        "DEPLOY_USER",
+        "admin"
     )
 
     clave_correcta = os.environ.get(
@@ -806,36 +893,37 @@ def admin_deploy():
     )
 
     if not clave_correcta:
-
         return render_template(
             "admin.html",
-            version=obtener_version_actual(),
-            mensaje=None,
-            error=(
-                "DEPLOY_PASSWORD todavía no está "
-                "configurada en el servidor."
+            **datos_panel_admin(
+                error="DEPLOY_PASSWORD todavía no está configurada."
             )
         ), 503
 
-    if not secrets.compare_digest(
+    usuario_valido = secrets.compare_digest(
+        usuario_ingresado,
+        usuario_correcto
+    )
+
+    clave_valida = secrets.compare_digest(
         clave_ingresada,
         clave_correcta
-    ):
+    )
 
+    if not usuario_valido or not clave_valida:
         return render_template(
             "admin.html",
-            version=obtener_version_actual(),
-            mensaje=None,
-            error="Clave incorrecta."
+            **datos_panel_admin(
+                error="Usuario o contraseña incorrectos."
+            )
         ), 403
 
     if not os.path.isfile(DEPLOY_SCRIPT):
-
         return render_template(
             "admin.html",
-            version=obtener_version_actual(),
-            mensaje=None,
-            error="No se encontró deploy-rastreo.sh."
+            **datos_panel_admin(
+                error="No se encontró deploy.sh en el servidor."
+            )
         ), 500
 
     try:
@@ -849,8 +937,9 @@ def admin_deploy():
             [
                 "bash",
                 "-lc",
-                f"sleep 2; exec {DEPLOY_SCRIPT}"
+                f"sleep 2; exec bash {DEPLOY_SCRIPT}"
             ],
+            cwd=PROJECT_DIR,
             stdout=log,
             stderr=subprocess.STDOUT,
             start_new_session=True
@@ -858,22 +947,20 @@ def admin_deploy():
 
         return render_template(
             "admin.html",
-            version=obtener_version_actual(),
-            mensaje=(
-                "Actualización iniciada. "
-                "Esperá unos 15 segundos y "
-                "volvé a abrir esta página."
-            ),
-            error=None
+            **datos_panel_admin(
+                mensaje=(
+                    "Actualización iniciada. "
+                    "Esperá unos 15 segundos y recargá esta página."
+                )
+            )
         )
 
     except Exception as e:
-
         return render_template(
             "admin.html",
-            version=obtener_version_actual(),
-            mensaje=None,
-            error=f"No se pudo iniciar el despliegue: {e}"
+            **datos_panel_admin(
+                error=f"No se pudo iniciar el despliegue: {e}"
+            )
         ), 500
 
 
