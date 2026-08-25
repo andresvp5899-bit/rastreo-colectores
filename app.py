@@ -935,9 +935,9 @@ def admin_deploy():
 
         subprocess.Popen(
             [
-                "bash",
+                "/bin/bash",
                 "-lc",
-                f"sleep 2; exec bash {DEPLOY_SCRIPT}"
+                f"sleep 2; exec /bin/bash {DEPLOY_SCRIPT}"
             ],
             cwd=PROJECT_DIR,
             stdout=log,
