@@ -37,6 +37,32 @@ const capaSatelite = L.tileLayer(
 
 
 // ==========================================
+// CALLES SOBRE EL SATÉLITE
+// ==========================================
+
+const capaCalles = L.tileLayer(
+    "https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}",
+    {
+        maxZoom: 19,
+        attribution: "Esri"
+    }
+);
+
+
+// ==========================================
+// NOMBRES Y LUGARES SOBRE EL SATÉLITE
+// ==========================================
+
+const capaLugares = L.tileLayer(
+    "https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
+    {
+        maxZoom: 19,
+        attribution: "Esri"
+    }
+);
+
+
+// ==========================================
 // MAPA INICIAL
 // ==========================================
 
@@ -58,12 +84,24 @@ function cambiarMapa(tipo) {
 
     if (tipo === "satelite") {
 
+        // Quitar mapa normal
         if (mapa.hasLayer(capaNormal)) {
             mapa.removeLayer(capaNormal);
         }
 
+        // Agregar imagen satelital
         if (!mapa.hasLayer(capaSatelite)) {
             capaSatelite.addTo(mapa);
+        }
+
+        // Agregar calles
+        if (!mapa.hasLayer(capaCalles)) {
+            capaCalles.addTo(mapa);
+        }
+
+        // Agregar nombres y lugares
+        if (!mapa.hasLayer(capaLugares)) {
+            capaLugares.addTo(mapa);
         }
 
         botonMapa?.classList.remove("activo");
@@ -71,10 +109,22 @@ function cambiarMapa(tipo) {
 
     } else {
 
+        // Quitar satélite
         if (mapa.hasLayer(capaSatelite)) {
             mapa.removeLayer(capaSatelite);
         }
 
+        // Quitar calles
+        if (mapa.hasLayer(capaCalles)) {
+            mapa.removeLayer(capaCalles);
+        }
+
+        // Quitar nombres
+        if (mapa.hasLayer(capaLugares)) {
+            mapa.removeLayer(capaLugares);
+        }
+
+        // Volver al mapa normal
         if (!mapa.hasLayer(capaNormal)) {
             capaNormal.addTo(mapa);
         }
@@ -514,6 +564,7 @@ async function eliminarColector(
                 ]
             );
 
+
             delete marcadores[
                 deviceId
             ];
@@ -543,6 +594,10 @@ async function eliminarColector(
     }
 }
 
+
+// ==========================================
+// FIN PARTE 1
+// ==========================================
 
 // ==========================================
 // ACTUALIZAR LISTA LATERAL
