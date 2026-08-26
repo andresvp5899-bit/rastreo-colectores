@@ -3,164 +3,663 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Rastreo de Colectores</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <!-- Leaflet -->
+    <title>
+        Sistema de Colectores
+    </title>
+
+
+    <!-- =====================================
+         LEAFLET
+    ====================================== -->
+
     <link
         rel="stylesheet"
         href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     >
 
-    <!-- Nuestro CSS -->
+
+    <!-- =====================================
+         NUESTRO CSS
+    ====================================== -->
+
     <link
         rel="stylesheet"
         href="{{ url_for('static', filename='estilo.css') }}"
     >
+
 </head>
+
 
 <body>
 
-    <!-- ================================
-         PANEL SUPERIOR
-    ================================= -->
 
-    <div id="panelSuperior">
+<!-- =========================================
+     BARRA SUPERIOR
+========================================== -->
 
-        <div id="titulo">
-            📍 Rastreo de Colectores
+<header id="barraSuperior">
+
+    <div class="marcaSistema">
+
+        <div class="logoSistema">
+            📍
         </div>
 
-        <div id="estadisticas">
+        <div>
+            <h1>
+                SISTEMA DE COLECTORES
+            </h1>
 
-            <div class="tarjetaEstadistica">
-                <span
+            <span>
+                Inventario y Rastreo en Tiempo Real
+            </span>
+        </div>
+
+    </div>
+
+
+    <div class="busquedaSuperior">
+
+        <input
+            type="text"
+            id="buscarColector"
+            placeholder="Buscar serie, usuario, ubicación..."
+        >
+
+        <button
+            onclick="buscarColector()"
+            class="botonBuscar"
+        >
+            🔎
+        </button>
+
+    </div>
+
+
+    <div class="usuarioSuperior">
+
+        <span class="estadoServidor">
+            ● En línea
+        </span>
+
+        <span class="usuarioAdmin">
+            👤 admin
+        </span>
+
+    </div>
+
+</header>
+
+
+
+<!-- =========================================
+     MENÚ LATERAL
+========================================== -->
+
+<aside id="menuPrincipal">
+
+    <a
+        href="#"
+        class="menuItem activo"
+    >
+        🏠
+        <span>
+            Dashboard
+        </span>
+    </a>
+
+
+    <a
+        href="/base-datos"
+        class="menuItem"
+    >
+        🗃️
+        <span>
+            Inventario
+        </span>
+    </a>
+
+
+    <a
+        href="/mapa"
+        class="menuItem"
+    >
+        📍
+        <span>
+            Mapa en tiempo real
+        </span>
+    </a>
+
+
+    <a
+        href="#"
+        class="menuItem"
+    >
+        🕒
+        <span>
+            Historial de ubicación
+        </span>
+    </a>
+
+
+    <a
+        href="/colectores/eliminados"
+        class="menuItem"
+    >
+        🗑️
+        <span>
+            Colectores eliminados
+        </span>
+    </a>
+
+
+    <div class="separadorMenu">
+        ADMINISTRACIÓN
+    </div>
+
+
+    <a
+        href="/admin"
+        class="menuItem"
+    >
+        🚀
+        <span>
+            Producción
+        </span>
+    </a>
+
+</aside>
+
+
+
+<!-- =========================================
+     CONTENIDO PRINCIPAL
+========================================== -->
+
+<main id="contenidoPrincipal">
+
+
+    <!-- =====================================
+         ESTADÍSTICAS
+    ====================================== -->
+
+    <section id="estadisticas">
+
+
+        <div class="tarjetaEstadistica">
+
+            <div class="iconoEstadistica azul">
+                📦
+            </div>
+
+            <div>
+
+                <span class="tituloEstadistica">
+                    TOTAL COLECTORES
+                </span>
+
+                <strong
                     class="numero"
                     id="totalColectores"
                 >
                     0
-                </span>
+                </strong>
 
-                <span class="texto">
-                    Total
-                </span>
+                <small>
+                    Todos los dispositivos
+                </small>
+
             </div>
 
+        </div>
 
-            <div class="tarjetaEstadistica online">
 
-                <span
-                    class="numero"
+
+        <div class="tarjetaEstadistica">
+
+            <div class="iconoEstadistica verde">
+                📶
+            </div>
+
+            <div>
+
+                <span class="tituloEstadistica">
+                    EN LÍNEA
+                </span>
+
+                <strong
+                    class="numero verdeTexto"
                     id="totalOnline"
                 >
                     0
-                </span>
+                </strong>
 
-                <span class="texto">
-                    En línea
-                </span>
+                <small>
+                    Conectados ahora
+                </small>
 
             </div>
 
+        </div>
 
-            <div class="tarjetaEstadistica offline">
 
-                <span
-                    class="numero"
+
+        <div class="tarjetaEstadistica">
+
+            <div class="iconoEstadistica rojo">
+                📡
+            </div>
+
+            <div>
+
+                <span class="tituloEstadistica">
+                    DESCONECTADOS
+                </span>
+
+                <strong
+                    class="numero rojoTexto"
                     id="totalOffline"
                 >
                     0
-                </span>
+                </strong>
 
-                <span class="texto">
-                    Desconectados
-                </span>
+                <small>
+                    Sin conexión
+                </small>
 
             </div>
 
         </div>
 
 
-        <!-- BUSCADOR -->
 
-        <div id="buscador">
+        <div class="tarjetaEstadistica">
 
-            <input
-                type="text"
-                id="buscarColector"
-                placeholder="Buscar por serie..."
+            <div class="iconoEstadistica amarillo">
+                ⏱
+            </div>
+
+            <div>
+
+                <span class="tituloEstadistica">
+                    SIN DATOS RECIENTES
+                </span>
+
+                <strong
+                    class="numero amarilloTexto"
+                    id="totalSinDatos"
+                >
+                    0
+                </strong>
+
+                <small>
+                    Sin reporte reciente
+                </small>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="tarjetaEstadistica">
+
+            <div class="iconoEstadistica morado">
+                🔋
+            </div>
+
+            <div>
+
+                <span class="tituloEstadistica">
+                    BATERÍA PROMEDIO
+                </span>
+
+                <strong
+                    class="numero"
+                    id="bateriaPromedio"
+                >
+                    0%
+                </strong>
+
+                <small>
+                    Todos los dispositivos
+                </small>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================
+         ÁREA DE MAPA
+    ====================================== -->
+
+    <section id="zonaMapa">
+
+
+        <!-- ================================
+             LISTA DE COLECTORES
+        ================================= -->
+
+        <aside id="panelLateral">
+
+            <div class="cabeceraPanel">
+
+                <div>
+                    <h2>
+                        Colectores
+                    </h2>
+
+                    <span id="cantidadOnlineLista">
+                        0 en línea
+                    </span>
+                </div>
+
+            </div>
+
+
+            <div class="filtroEstado">
+
+                <select id="filtroEstado">
+
+                    <option value="todos">
+                        Todos los estados
+                    </option>
+
+                    <option value="online">
+                        En línea
+                    </option>
+
+                    <option value="offline">
+                        Desconectados
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div id="listaColectores">
+
+                <!-- Generado desde mapa.js -->
+
+            </div>
+
+        </aside>
+
+
+
+        <!-- ================================
+             MAPA
+        ================================= -->
+
+        <section id="contenedorMapa">
+
+
+            <div id="cabeceraMapa">
+
+                <div>
+
+                    <h2>
+                        Mapa en tiempo real
+                    </h2>
+
+                    <span class="enVivo">
+                        ● En vivo
+                    </span>
+
+                </div>
+
+
+                <!-- CAMBIAR TIPO DE MAPA -->
+
+                <div id="selectorMapa">
+
+                    <button
+                        id="botonMapa"
+                        class="botonTipoMapa activo"
+                        onclick="cambiarMapa('normal')"
+                    >
+                        🗺 Mapa
+                    </button>
+
+
+                    <button
+                        id="botonSatelite"
+                        class="botonTipoMapa"
+                        onclick="cambiarMapa('satelite')"
+                    >
+                        🛰 Satélite
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div id="map">
+            </div>
+
+
+            <!-- LEYENDA -->
+
+            <div id="leyendaMapa">
+
+                <div>
+                    <span class="punto verdePunto"></span>
+                    En línea
+                </div>
+
+                <div>
+                    <span class="punto amarilloPunto"></span>
+                    Sin datos recientes
+                </div>
+
+                <div>
+                    <span class="punto rojoPunto"></span>
+                    Desconectado
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ================================
+             INFORMACIÓN DEL COLECTOR
+        ================================= -->
+
+        <aside id="panelDetalle">
+
+            <div id="detalleVacio">
+
+                <div class="iconoDetalle">
+                    📍
+                </div>
+
+                <h3>
+                    Seleccioná un colector
+                </h3>
+
+                <p>
+                    Hacé clic sobre un colector
+                    para ver su información.
+                </p>
+
+            </div>
+
+
+            <div
+                id="detalleColector"
+                style="display:none;"
             >
 
-            <button
-                onclick="buscarColector()"
-            >
-                🔎 Buscar
-            </button>
+                <div class="detalleTitulo">
 
-        </div>
+                    <div>
+
+                        <h2 id="detalleSerie">
+                            -
+                        </h2>
+
+                        <span
+                            id="detalleEstado"
+                            class="estadoOnline"
+                        >
+                            ● En línea
+                        </span>
+
+                    </div>
+
+                </div>
 
 
-        <!-- BOTÓN ELIMINADOS -->
+                <div class="detalleResumen">
 
-        <a
-            href="/colectores/eliminados"
-            id="botonEliminados"
-        >
-            🗑️ Eliminados
-        </a>
+                    <div>
+
+                        <strong id="detalleBateria">
+                            --%
+                        </strong>
+
+                        <span>
+                            🔋 Batería
+                        </span>
+
+                    </div>
 
 
-        <div id="mensajeBusqueda">
-        </div>
+                    <div>
 
+                        <strong id="detalleConexion">
+                            --
+                        </strong>
+
+                        <span>
+                            🕒 Última conexión
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="detalleSeccion">
+
+                    <span class="tituloSeccion">
+                        UBICACIÓN ACTUAL
+                    </span>
+
+                    <strong id="detalleUbicacion">
+                        Ubicación disponible
+                    </strong>
+
+                    <span id="detalleCoordenadas">
+                        --
+                    </span>
+
+                </div>
+
+
+                <div class="detalleSeccion">
+
+                    <span class="tituloSeccion">
+                        INFORMACIÓN DEL DISPOSITIVO
+                    </span>
+
+
+                    <div class="filaDetalle">
+
+                        <span>
+                            Serie:
+                        </span>
+
+                        <strong id="infoSerie">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div class="filaDetalle">
+
+                        <span>
+                            Batería:
+                        </span>
+
+                        <strong id="infoBateria">
+                            -
+                        </strong>
+
+                    </div>
+
+
+                    <div class="filaDetalle">
+
+                        <span>
+                            Última conexión:
+                        </span>
+
+                        <strong id="infoConexion">
+                            -
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    id="botonHistorial"
+                    class="botonHistorial"
+                >
+                    🕒 Ver historial
+                </button>
+
+            </div>
+
+        </aside>
+
+
+    </section>
+
+
+
+    <div id="mensajeBusqueda">
     </div>
 
-
-    <!-- ================================
-         PANEL LATERAL
-    ================================= -->
-
-    <div id="panelLateral">
-
-        <div class="tituloLista">
-
-            <span>
-                Colectores
-            </span>
-
-        </div>
+</main>
 
 
-        <div id="listaColectores">
 
-            <!-- Se genera desde mapa.js -->
+<!-- =========================================
+     LEAFLET
+========================================== -->
 
-        </div>
-
-    </div>
-
-
-    <!-- ================================
-         MAPA
-    ================================= -->
-
-    <div id="map">
-    </div>
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+</script>
 
 
-    <!-- Leaflet -->
 
-    <script
-        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
-    </script>
+<!-- =========================================
+     NUESTRO JAVASCRIPT
+========================================== -->
 
+<script
+    src="{{ url_for('static', filename='mapa.js') }}">
+</script>
 
-    <!-- Nuestro JavaScript -->
-
-    <script
-        src="{{ url_for('static', filename='mapa.js') }}">
-    </script>
 
 </body>
 

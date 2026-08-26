@@ -2,23 +2,87 @@
 // CREAR MAPA
 // ==========================================
 
-const mapa = L.map("map").setView(
+const mapa = L.map("map", {
+    zoomControl: true
+}).setView(
     [-25.2867, -57.3333],
-    11
+    13
 );
 
 
 // ==========================================
-// MAPA OPENSTREETMAP
+// CAPA MAPA NORMAL
 // ==========================================
 
-L.tileLayer(
+const capaNormal = L.tileLayer(
     "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
     {
         maxZoom: 19,
         attribution: "© OpenStreetMap"
     }
-).addTo(mapa);
+);
+
+
+// ==========================================
+// CAPA SATELITAL
+// ==========================================
+
+const capaSatelite = L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    {
+        maxZoom: 19,
+        attribution: "Esri World Imagery"
+    }
+);
+
+
+// ==========================================
+// MAPA INICIAL
+// ==========================================
+
+capaNormal.addTo(mapa);
+
+
+// ==========================================
+// CAMBIAR MAPA / SATÉLITE
+// ==========================================
+
+function cambiarMapa(tipo) {
+
+    const botonMapa =
+        document.getElementById("botonMapa");
+
+    const botonSatelite =
+        document.getElementById("botonSatelite");
+
+
+    if (tipo === "satelite") {
+
+        if (mapa.hasLayer(capaNormal)) {
+            mapa.removeLayer(capaNormal);
+        }
+
+        if (!mapa.hasLayer(capaSatelite)) {
+            capaSatelite.addTo(mapa);
+        }
+
+        botonMapa?.classList.remove("activo");
+        botonSatelite?.classList.add("activo");
+
+    } else {
+
+        if (mapa.hasLayer(capaSatelite)) {
+            mapa.removeLayer(capaSatelite);
+        }
+
+        if (!mapa.hasLayer(capaNormal)) {
+            capaNormal.addTo(mapa);
+        }
+
+        botonSatelite?.classList.remove("activo");
+        botonMapa?.classList.add("activo");
+    }
+}
 
 
 // ==========================================
